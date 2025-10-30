@@ -1,20 +1,23 @@
-import threading
-import requests
+import http from 'k6/http';
+import { sleep } from 'k6';
 
-url = "http://192.168.0.171:8080"
-method = input("GET أو POST؟ ").strip().upper()
+export let options = {
+  // stages بسيطة لكن VUS و DURATION ستأتي من المتغيرات عند التشغيل
+  // إذا أردت stages متقدمة عدل هنا أو أضف ENV متغيرات.
+};
 
-def attack():
-    while True:
-        try:
-            if method == "POST":
-                res = requests.post(url, data={"key": "value"})
-            else:
-                res = requests.get(url)
-            print("Status:", res.status_code)
-        except:
-            print("Error or site is down")
+export default function () {
+  const target = __ENV.TARGET || 'http://127.0.0.1:8080/';
+  const method = (__ENV.METHOD || 'GET').toUpperCase();
+  const body   = __ENV.BODY || '';
+  const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
 
-# عدد الخيوط
-for i in range(1000):
-    threading.Thread(target=attack).start()
+  if (method === 'POST') {
+    http.post(target, body, { headers: headers });
+  } else {
+    http.get(target);
+  }
+
+  // تأخير بسيط لمحاكاة سلوك حقيقي
+  sleep(Math.random() * 1.5 + 0.5);
+}
